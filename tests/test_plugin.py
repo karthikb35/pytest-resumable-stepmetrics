@@ -7,7 +7,7 @@ def test_fixture_available_and_json_written(pytester):
     pytester.makepyfile(
         """
         from dataclasses import dataclass
-        from pytest_steplog import steplog_record
+        from pytest_resumable_step import steplog_record
 
         @steplog_record(stamp=("attempt",))
         @dataclass

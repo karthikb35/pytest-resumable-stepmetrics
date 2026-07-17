@@ -1,11 +1,11 @@
-# pytest-steplog
+# pytest-resumable-step
 
 Structured **step-level metadata**, **retry / attempt tracking**, and
 **resume-on-retry** for pytest — plus a tiny **extension system** so you can
 attach your own domain records (and get JSON + terminal reporting for free).
 
 ```bash
-pip install pytest-steplog
+pip install pytest-resumable-step
 ```
 
 ## Why
@@ -70,6 +70,25 @@ with steplog.resumable("download artifact") as step:
 > retry (downloads, name resolution, hashing). Stateful steps (deploys, power
 > cycles, connection setup) should use plain `steplog(...)` so they re-run.
 
+### Guard-free resume with `steplog.run(...)`
+
+A `with` block **always** runs its body — so `resumable` needs the
+`if not step.resumed:` guard. If you'd rather skip the work automatically with
+no guard, pass the work as a callable to `steplog.run(...)`; it simply isn't
+called when the step already passed:
+
+```python
+def download():
+    ...expensive work...
+
+def test_flow(steplog):
+    steplog.reset_attempt()
+    steplog.run("download artifact", download)   # skipped entirely on retry
+```
+
+`steplog.run` returns whatever the callable returns (or `None` when skipped) and
+forwards any extra `*args` / `**kwargs` to it.
+
 ## Custom records (the extension point)
 
 Attach any dataclass with `steplog.record(...)`. Register it with
@@ -78,7 +97,7 @@ Attach any dataclass with `steplog.record(...)`. Register it with
 
 ```python
 from dataclasses import dataclass
-from pytest_steplog import steplog_record
+from pytest_resumable_step import steplog_record
 
 @steplog_record(key="deploy_actions", stamp=("attempt",))
 @dataclass
@@ -111,7 +130,8 @@ class BenchSample:
 | Call | Purpose |
 |---|---|
 | `steplog("name")` | Track a step (context manager). |
-| `steplog.resumable("name")` | Track a step that skips on retry once passed. |
+| `steplog.resumable("name")` | Track a step that skips on retry once passed (guard with `step.resumed`). |
+| `steplog.run("name", func, *a, **kw)` | Track a callable step; skips *calling* `func` on retry (guard-free). |
 | `steplog.record(obj)` | Attach a custom dataclass record. |
 | `steplog.reset_attempt()` | Advance the attempt counter (call first each attempt). |
 | `steplog.context` | Mutable dict used to auto-stamp records. |

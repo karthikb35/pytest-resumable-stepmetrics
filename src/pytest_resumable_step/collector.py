@@ -8,8 +8,8 @@ import dataclasses
 import logging
 from typing import Any, Generator
 
-from pytest_steplog.models import LogRecord, Run, Step, utc_now
-from pytest_steplog.registry import spec_for
+from pytest_resumable_step.models import LogRecord, Run, Step, utc_now
+from pytest_resumable_step.registry import spec_for
 
 _CURRENT_STEP: contextvars.ContextVar["Step | None"] = contextvars.ContextVar(
     "steplog_current_step", default=None
@@ -175,6 +175,40 @@ class StepLogCollector:
         if step.status == "passed":
             self._completed.add(name)
 
+    def run_step(self, name: str, func, *args, **kwargs):
+        """Track a step and *skip calling* ``func`` on retry once it has passed.
+
+        Unlike :meth:`resumable_step`, ``func`` is only invoked when the step
+        has not already succeeded — so the expensive work is genuinely skipped
+        with **no guard** needed in caller code (a ``with`` block always runs
+        its body, but a callable can simply not be called).
+
+        Use only for pure / idempotent work whose effects survive a retry.
+
+        Args:
+            name: Stable step name.
+            func: Callable performing the step's work.
+            *args: Positional arguments forwarded to ``func``.
+            **kwargs: Keyword arguments forwarded to ``func``.
+
+        Returns:
+            Whatever ``func`` returns, or ``None`` if the step was skipped.
+
+        """
+
+        if name in self._completed:
+            step = Step(name=name, attempt=max(1, self._attempt), resumed=True)
+            step.info["resumed"] = True
+            self.steps.append(step)
+            step.close("skipped")
+            return None
+
+        with self.track_step(name) as step:
+            result = func(*args, **kwargs)
+        if step.status == "passed":
+            self._completed.add(name)
+        return result
+
     # ── custom records ────────────────────────────────────────────────────────
     def record(self, obj: Any) -> Any:
         """Attach a custom dataclass record to this test.
@@ -184,7 +218,7 @@ class StepLogCollector:
 
         Args:
             obj: A dataclass instance (optionally registered via
-                :func:`~pytest_steplog.registry.steplog_record`).
+                :func:`~pytest_resumable_step.registry.steplog_record`).
 
         Returns:
             The stored record instance.

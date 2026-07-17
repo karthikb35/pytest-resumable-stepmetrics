@@ -1,4 +1,4 @@
-"""Custom-record extension system for pytest-steplog.
+"""Custom-record extension system for pytest-resumable-step.
 
 Users register their own dataclasses with :func:`steplog_record` (or just pass
 any dataclass to ``steplog.record``) to attach domain-specific, per-attempt

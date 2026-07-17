@@ -1,4 +1,4 @@
-"""Unit tests for the pytest-steplog collector, registry and reporter."""
+"""Unit tests for the pytest-resumable-step collector, registry and reporter."""
 
 from __future__ import annotations
 
@@ -6,10 +6,10 @@ from dataclasses import dataclass
 
 import pytest
 
-from pytest_steplog import steplog_record
-from pytest_steplog.collector import StepLogCollector
-from pytest_steplog.registry import spec_for
-from pytest_steplog.reporter import render_records_table, render_steps_table, to_json_dict
+from pytest_resumable_step import steplog_record
+from pytest_resumable_step.collector import StepLogCollector
+from pytest_resumable_step.registry import spec_for
+from pytest_resumable_step.reporter import render_records_table, render_steps_table, to_json_dict
 
 
 def test_step_status_capture():
@@ -79,6 +79,55 @@ def test_resumable_reruns_on_failure():
         attempt(fail=True)
     attempt(fail=False)
     assert ran == [1, 2], "verify should re-run because it failed the first time"
+
+
+def test_run_callable_skips_without_guard():
+    c = StepLogCollector("t")
+    calls = []
+
+    def download():
+        calls.append(c._attempt)
+
+    def attempt():
+        c.reset_attempt()
+        c.run_step("download", download)  # no guard needed
+        with c.track_step("flash"):
+            if c._attempt < 2:
+                raise RuntimeError("flash failed")
+
+    with pytest.raises(RuntimeError):
+        attempt()
+    attempt()
+
+    assert calls == [1], "download callable must be invoked only once"
+    dl = [s for s in c.steps if s.name == "download"]
+    assert dl[0].resumed is False and dl[0].status == "passed"
+    assert dl[1].resumed is True and dl[1].status == "skipped"
+
+
+def test_run_callable_returns_value_and_forwards_args():
+    c = StepLogCollector("t")
+    result = c.run_step("compute", lambda a, b: a + b, 2, b=3)
+    assert result == 5
+
+
+def test_run_callable_reruns_after_failure():
+    c = StepLogCollector("t")
+    calls = []
+
+    def flaky():
+        calls.append(c._attempt)
+        if c._attempt < 2:
+            raise RuntimeError("boom")
+
+    def attempt():
+        c.reset_attempt()
+        c.run_step("flaky", flaky)
+
+    with pytest.raises(RuntimeError):
+        attempt()
+    attempt()
+    assert calls == [1, 2], "failed callable must re-run on the next attempt"
 
 
 def test_record_without_registration_uses_defaults():

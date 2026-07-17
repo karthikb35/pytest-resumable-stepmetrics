@@ -8,9 +8,9 @@ from typing import Any, Callable, Generator
 
 import pytest
 
-from pytest_steplog.collector import StepLogCollector
-from pytest_steplog.registry import spec_for
-from pytest_steplog.reporter import (
+from pytest_resumable_step.collector import StepLogCollector
+from pytest_resumable_step.registry import spec_for
+from pytest_resumable_step.reporter import (
     render_records_table,
     render_steps_table,
     to_json_dict,
@@ -82,6 +82,26 @@ class _StepFactory:
         return self.collector.resumable_step(
             name, skip_exceptions=(pytest.skip.Exception,)
         )
+
+    def run(self, name: str, func: Callable, *args: Any, **kwargs: Any) -> Any:
+        """Track a step and skip *calling* ``func`` on retry once it has passed.
+
+        The guard-free counterpart to :meth:`resumable` — ``func`` is simply not
+        invoked when the step already succeeded, so no ``if not step.resumed``
+        check is needed. See :meth:`StepLogCollector.run_step`.
+
+        Args:
+            name: The step name.
+            func: Callable performing the step's work.
+            *args: Positional arguments forwarded to ``func``.
+            **kwargs: Keyword arguments forwarded to ``func``.
+
+        Returns:
+            Whatever ``func`` returns, or ``None`` if the step was skipped.
+
+        """
+
+        return self.collector.run_step(name, func, *args, **kwargs)
 
     def record(self, obj: Any) -> Any:
         """Attach a custom dataclass record. See :meth:`StepLogCollector.record`.
