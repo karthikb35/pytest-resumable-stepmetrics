@@ -16,7 +16,17 @@ pip install pytest-resumable-stepmetrics
 
 ## What you get
 
-A SaaS onboarding flow fails during workspace provisioning and retries.
+Out of the box, every test gets:
+
+- **Named step tracking** — every logical step in a test has a name, status, and duration. No more "which line failed?"
+- **Per-attempt visibility** — when a test retries, every step from every attempt is recorded with its attempt number. You see the full story, not just the final outcome.
+- **Unambiguous step statuses** — `passed`, `failed`, `skipped_on_retry` (framework-skipped idempotent step), or `skipped` (explicitly skipped by your test logic).
+- **Structured domain records** — attach your own dataclass (HTTP calls, DB queries, deploy events) and get a per-attempt table in the terminal and a JSON array in the report automatically.
+- **JSON report per test** — machine-readable, stable schema, ready to ingest into Elasticsearch, a database, or a CI dashboard.
+
+### Example — SaaS user onboarding
+
+A SaaS onboarding flow fails during workspace provisioning and retries once.
 Your terminal shows this **automatically** — no extra code:
 
 ```
@@ -54,7 +64,7 @@ steplog summary:
 
 **Row 3:** `provision workspace` failed on attempt 1 — exact failure point, no log digging.
 **Rows 4–5:** `create account` and `send welcome email` are `skipped_on_retry` — they already passed; no duplicate account or email.
-**Row 8:** `notify slack` is `skipped` — explicitly skipped by the test based on a runtime condition (not a retry). The status values are unambiguous.
+**Row 8:** `notify slack` is `skipped` — explicitly skipped by test logic, not a retry. Status values are unambiguous.
 
 ---
 
@@ -154,6 +164,9 @@ def test_new_user_signup(steplog):
 
 ### Sample `report.json`
 
+> Abbreviated — full report contains all 8 steps and 5 provisioning actions.
+> Only the key rows are shown.
+
 ```json
 {
   "run": {
@@ -175,14 +188,6 @@ def test_new_user_signup(steplog):
       "error": null
     },
     {
-      "name": "send welcome email",
-      "attempt": 1,
-      "resumed": false,
-      "status": "passed",
-      "duration_seconds": 0.031,
-      "error": null
-    },
-    {
       "name": "provision workspace",
       "attempt": 1,
       "resumed": false,
@@ -199,27 +204,11 @@ def test_new_user_signup(steplog):
       "error": null
     },
     {
-      "name": "send welcome email",
-      "attempt": 2,
-      "resumed": true,
-      "status": "skipped_on_retry",
-      "duration_seconds": 0.0,
-      "error": null
-    },
-    {
       "name": "provision workspace",
       "attempt": 2,
       "resumed": false,
       "status": "passed",
       "duration_seconds": 0.141,
-      "error": null
-    },
-    {
-      "name": "assign trial plan",
-      "attempt": 2,
-      "resumed": false,
-      "status": "passed",
-      "duration_seconds": 0.041,
       "error": null
     },
     {
@@ -232,12 +221,27 @@ def test_new_user_signup(steplog):
     }
   ],
   "provisioning_actions": [
-    { "resource": "user",      "action": "created",     "status": "ok",    "duration_ms": 61.2,  "attempt": 1 },
-    { "resource": "email",     "action": "sent",        "status": "ok",    "duration_ms": 31.7,  "attempt": 1 },
-    { "resource": "workspace", "action": "provisioned", "status": "error", "duration_ms": 143.8, "attempt": 1 },
-    { "resource": "user",      "action": "created",     "status": "ok",    "duration_ms": 61.2,  "attempt": 2 },
-    { "resource": "workspace", "action": "provisioned", "status": "ok",    "duration_ms": 143.8, "attempt": 2 },
-    { "resource": "plan",      "action": "assigned",    "status": "ok",    "duration_ms": 38.4,  "attempt": 2 }
+    {
+      "resource": "user",
+      "action": "created",
+      "status": "ok",
+      "duration_ms": 61.2,
+      "attempt": 1
+    },
+    {
+      "resource": "workspace",
+      "action": "provisioned",
+      "status": "error",
+      "duration_ms": 143.8,
+      "attempt": 1
+    },
+    {
+      "resource": "workspace",
+      "action": "provisioned",
+      "status": "ok",
+      "duration_ms": 143.8,
+      "attempt": 2
+    }
   ]
 }
 ```

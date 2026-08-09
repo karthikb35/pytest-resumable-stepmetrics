@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pytest-resumable-stepmetrics"
-version = "0.1.4"
+version = "0.1.5"
 description = "Structured step-level metadata, retry/attempt tracking, and resume-on-retry for pytest — with a pluggable custom-record extension system."
 readme = "README.md"
 license = { file = "LICENSE" }

@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## [0.1.5] - 2026-08-09
+
+### Changed
+- README: "Out of the box, every test gets" bullet list before the SaaS example.
+- Sample `report.json` abbreviated to key rows; `provisioning_actions` expanded
+  to multi-line format for readability.
+
 ## [0.1.4] - 2026-08-09
 
 ### Added
