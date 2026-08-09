@@ -17,4 +17,4 @@ __all__ = [
     "steplog_record",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"

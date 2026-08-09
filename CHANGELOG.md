@@ -3,7 +3,13 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
-## [0.1.0] - Unreleased
+## [0.1.1] - 2026-08-09
+
+### Changed
+- README: added end-to-end API testing example, `ApiRequest` domain model, and
+  annotated sample `report.json`.
+
+## [0.1.0] - 2026-08-09
 
 ### Added
 - `steplog` fixture with `steplog(name)` step tracking.
