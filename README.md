@@ -157,13 +157,62 @@ def test_new_user_signup(steplog):
     "info": {}
   },
   "steps": [
-    { "name": "create account",      "attempt": 1, "resumed": false, "status": "passed",  "duration_seconds": 0.065, "error": null },
-    { "name": "send welcome email",  "attempt": 1, "resumed": false, "status": "passed",  "duration_seconds": 0.031, "error": null },
-    { "name": "provision workspace", "attempt": 1, "resumed": false, "status": "failed",  "duration_seconds": 0.140, "error": "workspace provisioner timed out after 30s" },
-    { "name": "create account",      "attempt": 2, "resumed": false, "status": "passed",  "duration_seconds": 0.061, "error": null },
-    { "name": "send welcome email",  "attempt": 2, "resumed": true,  "status": "skipped", "duration_seconds": 0.0,   "error": null },
-    { "name": "provision workspace", "attempt": 2, "resumed": false, "status": "passed",  "duration_seconds": 0.141, "error": null },
-    { "name": "assign trial plan",   "attempt": 2, "resumed": false, "status": "passed",  "duration_seconds": 0.041, "error": null }
+    {
+      "name": "create account",
+      "attempt": 1,
+      "resumed": false,
+      "status": "passed",
+      "duration_seconds": 0.065,
+      "error": null
+    },
+    {
+      "name": "send welcome email",
+      "attempt": 1,
+      "resumed": false,
+      "status": "passed",
+      "duration_seconds": 0.031,
+      "error": null
+    },
+    {
+      "name": "provision workspace",
+      "attempt": 1,
+      "resumed": false,
+      "status": "failed",
+      "duration_seconds": 0.140,
+      "error": "workspace provisioner timed out after 30s"
+    },
+    {
+      "name": "create account",
+      "attempt": 2,
+      "resumed": false,
+      "status": "passed",
+      "duration_seconds": 0.061,
+      "error": null
+    },
+    {
+      "name": "send welcome email",
+      "attempt": 2,
+      "resumed": true,
+      "status": "skipped",
+      "duration_seconds": 0.0,
+      "error": null
+    },
+    {
+      "name": "provision workspace",
+      "attempt": 2,
+      "resumed": false,
+      "status": "passed",
+      "duration_seconds": 0.141,
+      "error": null
+    },
+    {
+      "name": "assign trial plan",
+      "attempt": 2,
+      "resumed": false,
+      "status": "passed",
+      "duration_seconds": 0.041,
+      "error": null
+    }
   ],
   "provisioning_actions": [
     { "resource": "user",      "action": "created",     "status": "ok",    "duration_ms": 61.2,  "attempt": 1 },
