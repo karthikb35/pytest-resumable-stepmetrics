@@ -59,7 +59,8 @@ class Step:
         attempt: 1-based attempt index (``1`` on the first run, higher on retries).
         resumed: ``True`` when the step body was skipped on a retry because it
             already succeeded on an earlier attempt.
-        status: ``running``, ``passed``, ``failed`` or ``skipped``.
+        status: ``running``, ``passed``, ``failed``, ``skipped`` or
+            ``skipped_on_retry``.
         started_at: ISO 8601 start time.
         ended_at: ISO 8601 end time, or ``None`` while running.
         duration_seconds: Elapsed seconds, or ``None`` until closed.

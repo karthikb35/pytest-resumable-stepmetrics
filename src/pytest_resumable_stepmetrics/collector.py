@@ -130,7 +130,9 @@ class StepLogCollector:
         else:
             if step.status == "running":
                 step.close("passed")
-            elif step.status not in ("passed", "failed", "skipped"):
+            else:
+                # User explicitly set step.status inside the with block
+                # (e.g. step.status = "skipped") — honour it and close properly.
                 step.close(step.status)
         finally:
             _CURRENT_STEP.reset(token)
@@ -166,7 +168,7 @@ class StepLogCollector:
             step = Step(name=name, attempt=max(1, self._attempt), resumed=True)
             step.info["resumed"] = True
             self.steps.append(step)
-            step.close("skipped")
+            step.close("skipped_on_retry")
             yield step
             return
 
@@ -200,7 +202,7 @@ class StepLogCollector:
             step = Step(name=name, attempt=max(1, self._attempt), resumed=True)
             step.info["resumed"] = True
             self.steps.append(step)
-            step.close("skipped")
+            step.close("skipped_on_retry")
             return None
 
         with self.track_step(name) as step:

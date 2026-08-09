@@ -27,17 +27,18 @@ steplog summary:
   Retries: 1
 
  Steps:
-+---+---------------------+---------+---------+-------------+--------+----------+------+
-| # | Step                | Attempt | Status  | Duration(s) | Errors | Warnings | Info |
-+===+=====================+=========+=========+=============+========+==========+======+
-| 1 | create account      | 1       | passed  | 0.065       | 0      | 0        | 0    |
-| 2 | send welcome email  | 1       | passed  | 0.031       | 0      | 0        | 0    |
-| 3 | provision workspace | 1       | failed  | 0.140       | 0      | 0        | 0    |
-| 4 | create account      | 2       | passed  | 0.061       | 0      | 0        | 0    |
-| 5 | send welcome email  | 2       | skipped | 0.000       | 0      | 0        | 0    |
-| 6 | provision workspace | 2       | passed  | 0.141       | 0      | 0        | 0    |
-| 7 | assign trial plan   | 2       | passed  | 0.041       | 0      | 0        | 0    |
-+---+---------------------+---------+---------+-------------+--------+----------+------+
++---+---------------------+---------+------------------+-------------+--------+----------+------+
+| # | Step                | Attempt | Status           | Duration(s) | Errors | Warnings | Info |
++===+=====================+=========+==================+=============+========+==========+======+
+| 1 | create account      | 1       | passed           | 0.060       | 0      | 0        | 0    |
+| 2 | send welcome email  | 1       | passed           | 0.031       | 0      | 0        | 0    |
+| 3 | provision workspace | 1       | failed           | 0.140       | 0      | 0        | 0    |
+| 4 | create account      | 2       | skipped_on_retry | 0.000       | 0      | 0        | 0    |
+| 5 | send welcome email  | 2       | skipped_on_retry | 0.000       | 0      | 0        | 0    |
+| 6 | provision workspace | 2       | passed           | 0.141       | 0      | 0        | 0    |
+| 7 | assign trial plan   | 2       | passed           | 0.041       | 0      | 0        | 0    |
+| 8 | notify slack        | 2       | skipped          | 0.000       | 0      | 0        | 0    |
++---+---------------------+---------+------------------+-------------+--------+----------+------+
 
  provisioning_actions:
 +-----------+-------------+--------+-------------+---------+
@@ -46,15 +47,14 @@ steplog summary:
 | user      | created     | ok     | 61.2        | 1       |
 | email     | sent        | ok     | 31.7        | 1       |
 | workspace | provisioned | error  | 143.8       | 1       |
-| user      | created     | ok     | 61.2        | 2       |
 | workspace | provisioned | ok     | 143.8       | 2       |
 | plan      | assigned    | ok     | 38.4        | 2       |
 +-----------+-------------+--------+-------------+---------+
 ```
 
 **Row 3:** `provision workspace` failed on attempt 1 — exact failure point, no log digging.
-**Row 5:** `send welcome email` is `skipped` on attempt 2 — it already fired; no duplicate email sent.
-**`provisioning_actions`:** every backend event across both attempts, with attempt numbers — full audit trail.
+**Rows 4–5:** `create account` and `send welcome email` are `skipped_on_retry` — they already passed; no duplicate account or email.
+**Row 8:** `notify slack` is `skipped` — explicitly skipped by the test based on a runtime condition (not a retry). The status values are unambiguous.
 
 ---
 
@@ -111,11 +111,13 @@ def test_new_user_signup(steplog):
         nonlocal user_id
         steplog.reset_attempt()   # first line of every attempt
 
-        # Stateful — re-runs each attempt (account must exist before workspace)
-        with steplog("create account"):
+        # Idempotent — account already exists on retry, skip it
+        def create_account():
             result = svc.create_account(email="alice@example.com")
             user_id = result["user_id"]
             steplog.record(ProvisioningAction("user", "created", "ok", 61.2))
+
+        steplog.run("create account", create_account)
 
         # Idempotent — skip on retry so Alice doesn't get two welcome emails
         def send_email():
@@ -124,7 +126,7 @@ def test_new_user_signup(steplog):
 
         steplog.run("send welcome email", send_email)
 
-        # Stateful — re-runs each attempt
+        # Stateful — must re-run each attempt
         with steplog("provision workspace"):
             result = svc.provision_workspace(user_id=user_id)
             steplog.record(ProvisioningAction("workspace", "provisioned", "ok", 143.8))
@@ -132,6 +134,13 @@ def test_new_user_signup(steplog):
         with steplog("assign trial plan"):
             svc.assign_trial_plan(user_id=user_id, workspace_id=result["workspace_id"])
             steplog.record(ProvisioningAction("plan", "assigned", "ok", 38.4))
+
+        # Explicitly skipped based on a runtime condition (not a retry)
+        with steplog("notify slack") as step:
+            if os.getenv("CI"):
+                step.status = "skipped"   # set before the block exits — honoured as-is
+            else:
+                svc.notify_slack(user_id=user_id)
 
     # Retry loop — works with tenacity / pytest-rerunfailures / anything
     for attempt in range(2):
@@ -162,7 +171,7 @@ def test_new_user_signup(steplog):
       "attempt": 1,
       "resumed": false,
       "status": "passed",
-      "duration_seconds": 0.065,
+      "duration_seconds": 0.060,
       "error": null
     },
     {
@@ -184,16 +193,16 @@ def test_new_user_signup(steplog):
     {
       "name": "create account",
       "attempt": 2,
-      "resumed": false,
-      "status": "passed",
-      "duration_seconds": 0.061,
+      "resumed": true,
+      "status": "skipped_on_retry",
+      "duration_seconds": 0.0,
       "error": null
     },
     {
       "name": "send welcome email",
       "attempt": 2,
       "resumed": true,
-      "status": "skipped",
+      "status": "skipped_on_retry",
       "duration_seconds": 0.0,
       "error": null
     },
@@ -211,6 +220,14 @@ def test_new_user_signup(steplog):
       "resumed": false,
       "status": "passed",
       "duration_seconds": 0.041,
+      "error": null
+    },
+    {
+      "name": "notify slack",
+      "attempt": 2,
+      "resumed": false,
+      "status": "skipped",
+      "duration_seconds": 0.0,
       "error": null
     }
   ],
@@ -260,6 +277,32 @@ with steplog.resumable("send welcome email") as step:
 > ⚠️ Use resume only for **pure / idempotent** work — token fetch, email send,
 > file download, name resolution. Stateful steps (account creation, DB writes,
 > workspace provisioning) must re-run — use plain `steplog("name")`.
+
+---
+
+## Explicitly skipping a step
+
+Set `step.status = "skipped"` inside the `with` block to skip a step based on
+a runtime condition. The status is honoured as-is — the step is closed
+correctly and appears as `skipped` in the table and JSON report.
+
+```python
+with steplog("notify slack") as step:
+    if os.getenv("CI"):
+        step.status = "skipped"   # set before the block exits — no exception needed
+    else:
+        svc.notify_slack(user_id=user_id)
+```
+
+This is intentionally distinct from `skipped_on_retry` (which means "this step
+already passed on a previous attempt and was skipped by the framework").
+
+| Status | Cause |
+|---|---|
+| `passed` | Step completed without error. |
+| `failed` | Step raised an unhandled exception. |
+| `skipped_on_retry` | Step was skipped by the framework — it already passed on an earlier attempt. |
+| `skipped` | Step was explicitly skipped by test code via `step.status = "skipped"`. |
 
 ---
 

@@ -3,6 +3,21 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-08-09
+
+### Added
+- `step.status = "skipped"` inside a `with steplog(...)` block is now honoured
+  (step is closed correctly with that status).
+- `skipped_on_retry` status for framework-skipped steps (was `skipped`),
+  disambiguating from explicit skips set by test code.
+- `create account` step made resumable in the onboarding example; added
+  `notify slack` explicit-skip demo.
+- Status reference table added to README.
+
+### Changed
+- `resumable_step` and `run_step` now close skipped steps with
+  `status="skipped_on_retry"` instead of `"skipped"`.
+
 ## [0.1.3] - 2026-08-09
 
 ### Changed

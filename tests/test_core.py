@@ -58,7 +58,7 @@ def test_resumable_skips_after_success():
     download_steps = [s for s in c.steps if s.name == "download"]
     assert download_steps[0].resumed is False
     assert download_steps[1].resumed is True
-    assert download_steps[1].status == "skipped"
+    assert download_steps[1].status == "skipped_on_retry"
 
 
 def test_resumable_reruns_on_failure():
@@ -102,7 +102,7 @@ def test_run_callable_skips_without_guard():
     assert calls == [1], "download callable must be invoked only once"
     dl = [s for s in c.steps if s.name == "download"]
     assert dl[0].resumed is False and dl[0].status == "passed"
-    assert dl[1].resumed is True and dl[1].status == "skipped"
+    assert dl[1].resumed is True and dl[1].status == "skipped_on_retry"
 
 
 def test_run_callable_returns_value_and_forwards_args():
@@ -128,6 +128,19 @@ def test_run_callable_reruns_after_failure():
         attempt()
     attempt()
     assert calls == [1, 2], "failed callable must re-run on the next attempt"
+
+
+def test_explicit_skip_via_status_assignment():
+    """User sets step.status = 'skipped' inside the with block — must be honoured."""
+    c = StepLogCollector("t")
+
+    with c.track_step("conditional step") as step:
+        step.status = "skipped"  # explicit skip based on a runtime condition
+
+    s = c.steps[0]
+    assert s.status == "skipped"
+    assert s.ended_at is not None, "step must be properly closed"
+    assert s.duration_seconds is not None
 
 
 def test_record_without_registration_uses_defaults():

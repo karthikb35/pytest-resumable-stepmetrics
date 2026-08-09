@@ -94,20 +94,23 @@ def test_new_user_signup_retries_on_provisioning_failure(steplog):
 
         steplog.reset_attempt()  # must be the first call in every attempt
 
-        # --- create account (stateful — re-runs each attempt) ---
-        with steplog("create account"):
+        # --- create account (idempotent — skip on retry, account already exists) ---
+        def create_account():
+            nonlocal user_id
             result = svc.create_account(email="alice@example.com")
             user_id = result["user_id"]
             steplog.record(ProvisioningAction("user", "created", "ok", 61.2))
 
-        # --- send welcome email (idempotent — skip on retry, no guard needed) ---
+        steplog.run("create account", create_account)
+
+        # --- send welcome email (idempotent — skip on retry, don't email twice) ---
         def send_email():
             svc.send_welcome_email(user_id=user_id)
             steplog.record(ProvisioningAction("email", "sent", "ok", 31.7))
 
         steplog.run("send welcome email", send_email)
 
-        # --- provision workspace (stateful — re-runs each attempt) ---
+        # --- provision workspace (stateful — must re-run each attempt) ---
         with steplog("provision workspace"):
             try:
                 result = svc.provision_workspace(user_id=user_id)
@@ -122,6 +125,14 @@ def test_new_user_signup_retries_on_provisioning_failure(steplog):
             result = svc.assign_trial_plan(user_id=user_id, workspace_id=workspace_id)
             steplog.record(ProvisioningAction("plan", "assigned", "ok", 38.4))
             assert result["plan"] == "trial-14d"
+
+        # --- notify Slack — explicitly skipped in CI environments ---
+        with steplog("notify slack") as step:
+            import os
+            if os.getenv("CI"):
+                step.status = "skipped"  # set before the block exits — honoured as-is
+            else:
+                svc.send_welcome_email(user_id=user_id)  # reused as a stand-in
 
     # Retry loop — replace with tenacity / pytest-rerunfailures in practice
     last_exc = None
