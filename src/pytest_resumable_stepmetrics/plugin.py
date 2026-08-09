@@ -8,9 +8,9 @@ from typing import Any, Callable, Generator
 
 import pytest
 
-from pytest_resumable_step.collector import StepLogCollector
-from pytest_resumable_step.registry import spec_for
-from pytest_resumable_step.reporter import (
+from pytest_resumable_stepmetrics.collector import StepLogCollector
+from pytest_resumable_stepmetrics.registry import spec_for
+from pytest_resumable_stepmetrics.reporter import (
     render_records_table,
     render_steps_table,
     to_json_dict,

@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pytest-resumable-step"
+name = "pytest-resumable-stepmetrics"
 version = "0.1.0"
 description = "Structured step-level metadata, retry/attempt tracking, and resume-on-retry for pytest — with a pluggable custom-record extension system."
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.9"
-authors = [{ name = "pytest-resumable-step contributors" }]
+authors = [{ name = "pytest-resumable-stepmetrics contributors" }]
 keywords = ["pytest", "plugin", "steps", "retry", "resume", "metadata", "reporting"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -31,17 +31,17 @@ dependencies = ["pytest>=7.0"]
 test = ["pytest>=7.0"]
 
 [project.urls]
-Homepage = "https://github.com/karthikb35/pytest-resumable-step"
-Repository = "https://github.com/karthikb35/pytest-resumable-step"
-Issues = "https://github.com/karthikb35/pytest-resumable-step/issues"
-Changelog = "https://github.com/karthikb35/pytest-resumable-step/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/karthikb35/pytest-resumable-stepmetrics"
+Repository = "https://github.com/karthikb35/pytest-resumable-stepmetrics"
+Issues = "https://github.com/karthikb35/pytest-resumable-stepmetrics/issues"
+Changelog = "https://github.com/karthikb35/pytest-resumable-stepmetrics/blob/main/CHANGELOG.md"
 
 # Register the plugin with pytest.
 [project.entry-points.pytest11]
-steplog = "pytest_resumable_step.plugin"
+steplog = "pytest_resumable_stepmetrics.plugin"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pytest_resumable_step"]
+packages = ["src/pytest_resumable_stepmetrics"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

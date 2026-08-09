@@ -1,4 +1,4 @@
-"""Core data models for pytest-resumable-step."""
+"""Core data models for pytest-resumable-stepmetrics."""
 
 from __future__ import annotations
 

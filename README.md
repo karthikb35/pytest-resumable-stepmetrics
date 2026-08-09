@@ -1,11 +1,11 @@
-# pytest-resumable-step
+# pytest-resumable-stepmetrics
 
 Structured **step-level metadata**, **retry / attempt tracking**, and
 **resume-on-retry** for pytest — plus a tiny **extension system** so you can
 attach your own domain records (and get JSON + terminal reporting for free).
 
 ```bash
-pip install pytest-resumable-step
+pip install pytest-resumable-stepmetrics
 ```
 
 ## Why
@@ -97,7 +97,7 @@ Attach any dataclass with `steplog.record(...)`. Register it with
 
 ```python
 from dataclasses import dataclass
-from pytest_resumable_step import steplog_record
+from pytest_resumable_stepmetrics import steplog_record
 
 @steplog_record(key="deploy_actions", stamp=("attempt",))
 @dataclass

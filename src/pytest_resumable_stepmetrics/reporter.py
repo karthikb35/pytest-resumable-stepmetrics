@@ -1,13 +1,13 @@
-"""Reporting: terminal tables and JSON serialisation for pytest-resumable-step."""
+"""Reporting: terminal tables and JSON serialisation for pytest-resumable-stepmetrics."""
 
 from __future__ import annotations
 
 import dataclasses
 from typing import Any
 
-from pytest_resumable_step.collector import StepLogCollector
-from pytest_resumable_step.models import Step
-from pytest_resumable_step.registry import spec_for
+from pytest_resumable_stepmetrics.collector import StepLogCollector
+from pytest_resumable_stepmetrics.models import Step
+from pytest_resumable_stepmetrics.registry import spec_for
 
 
 def _render_table(headers: list[str], rows: list[list[Any]]) -> str:

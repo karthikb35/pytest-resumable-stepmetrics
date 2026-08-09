@@ -1,4 +1,4 @@
-"""Unit tests for the pytest-resumable-step collector, registry and reporter."""
+"""Unit tests for the pytest-resumable-stepmetrics collector, registry and reporter."""
 
 from __future__ import annotations
 
@@ -6,10 +6,10 @@ from dataclasses import dataclass
 
 import pytest
 
-from pytest_resumable_step import steplog_record
-from pytest_resumable_step.collector import StepLogCollector
-from pytest_resumable_step.registry import spec_for
-from pytest_resumable_step.reporter import render_records_table, render_steps_table, to_json_dict
+from pytest_resumable_stepmetrics import steplog_record
+from pytest_resumable_stepmetrics.collector import StepLogCollector
+from pytest_resumable_stepmetrics.registry import spec_for
+from pytest_resumable_stepmetrics.reporter import render_records_table, render_steps_table, to_json_dict
 
 
 def test_step_status_capture():

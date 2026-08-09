@@ -8,8 +8,8 @@ import dataclasses
 import logging
 from typing import Any, Generator
 
-from pytest_resumable_step.models import LogRecord, Run, Step, utc_now
-from pytest_resumable_step.registry import spec_for
+from pytest_resumable_stepmetrics.models import LogRecord, Run, Step, utc_now
+from pytest_resumable_stepmetrics.registry import spec_for
 
 _CURRENT_STEP: contextvars.ContextVar["Step | None"] = contextvars.ContextVar(
     "steplog_current_step", default=None
@@ -218,7 +218,7 @@ class StepLogCollector:
 
         Args:
             obj: A dataclass instance (optionally registered via
-                :func:`~pytest_resumable_step.registry.steplog_record`).
+                :func:`~pytest_resumable_stepmetrics.registry.steplog_record`).
 
         Returns:
             The stored record instance.
