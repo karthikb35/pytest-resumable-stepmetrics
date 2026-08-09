@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. This project adheres
 to [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-08-09
+
+### Changed
+- README fully rewritten: problem hook, real terminal output, runnable example.
+- Added `examples/test_order_flow.py` — self-contained runnable example (no extra deps).
+
 ## [0.1.1] - 2026-08-09
 
 ### Changed
